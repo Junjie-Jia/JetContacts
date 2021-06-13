@@ -11,8 +11,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.MaterialTheme.typography
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -20,43 +20,13 @@ import com.jia.jetcontacts.ui.theme.JetContactsTheme
 
 class MainActivity : ComponentActivity() {
 
-    private val contacts by lazy {
-        listOf(
-            Contact("Liam", "13888888801"),
-            Contact("Noah", "13888888802"),
-            Contact("William", "13888888803"),
-            Contact("James", "13888888804"),
-            Contact("Logan", "13888888805"),
-            Contact("Benjamin", "13888888806"),
-            Contact("Mason", "13888888807"),
-            Contact("Elijah", "13888888808"),
-            Contact("Oliver", "13888888809"),
-            Contact("Jacob", "13888888810"),
-            Contact("Emma", "13888888811"),
-            Contact("Olivia", "13888888812"),
-            Contact("Ava", "13888888813"),
-            Contact("Isabella", "13888888814"),
-            Contact("Sophia", "13888888815"),
-            Contact("Mia", "13888888816"),
-            Contact("Charlotte", "13888888817"),
-            Contact("Amelia", "13888888818"),
-            Contact("Evelyn", "13888888819"),
-            Contact("Abigail", "13888888820")
-        )
-    }
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             JetContactsTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(color = MaterialTheme.colors.background) {
-
-                    var name by remember { mutableStateOf("") }
-                    ContactList(contacts = contacts, name = name, onNameChange = {
-                        name = it
-                    })
+                    ContactList()
                 }
             }
         }
@@ -64,22 +34,18 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun ContactList(contacts: List<Contact>, name: String, onNameChange: (String) -> Unit) {
+fun ContactList(contactsViewModel: ContactsViewModel = ContactsViewModel()) {
+    val name: String by contactsViewModel.name.observeAsState("")
+    val contacts: List<Contact> by contactsViewModel.contacts.observeAsState(initial = emptyList())
     Column {
         TextField(
             modifier = Modifier
                 .fillMaxWidth(),
             value = name,
-            onValueChange = onNameChange,
+            onValueChange = { contactsViewModel.onNameChange(it) }
         )
-
         LazyColumn {
-            items(contacts.filter { contact ->
-                contact.name.contains(
-                    name,
-                    ignoreCase = true
-                )
-            }, key = {
+            items(contacts, key = {
                 it.phoneNumber
             }) { contact ->
                 ContactRow(contact)
